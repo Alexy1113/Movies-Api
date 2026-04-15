@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -24,6 +25,8 @@ import lombok.Setter;
 @Entity
 @Table(name = "actors")
 @Getter @Setter @NoArgsConstructor
+// put actors names first in the response
+@JsonPropertyOrder({ "name", "birthDate", "id" })
 public class Actor {
 
     @Id

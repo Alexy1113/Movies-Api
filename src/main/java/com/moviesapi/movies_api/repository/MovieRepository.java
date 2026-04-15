@@ -2,6 +2,8 @@ package com.moviesapi.movies_api.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page; 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -32,12 +34,13 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
      * Retrieves movies featuring a specific actor.
      * @param actorId The unique ID of the actor.
      */
-    List<Movie> findByActorsId(Long actorId);
+    List<Movie> findByActorsId(Long actorId);    
 
     /**
-     * Performs a case-insensitive search for movies whose titles contain the given string.
-     * Useful for implementing a search bar in the UI.
-     * @param title The keyword to search for in movie titles.
+     * Performs a case-insensitive search for movies with pagination.
+     * This replaces the old List-based search to support Extra requirements.
+     * @param title The keyword to search for.
+     * @param pageable Contains page number and size.
      */
-    List<Movie> findByTitleContainingIgnoreCase(String title);
+    Page<Movie> findByTitleContainingIgnoreCase(String title, Pageable pageable);
 }

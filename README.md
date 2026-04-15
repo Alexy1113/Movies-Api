@@ -15,6 +15,7 @@ Safe Deletion: Protects genres and actors from being deleted if they are linked 
 * Spring Boot 3.x
 * Spring Data JPA (Hibernate)
 * SQLite
+* Jackson (FasterXML)
 
 # 📂 Project Structure
 `model/` — Database entities (Movie, Actor, Genre).
@@ -75,6 +76,46 @@ JSON
   "actors": [{"id": 1}]
 }
 ``` 
+
+# 📄Pagination Support
+To handle large datasets efficiently, all GET endpoints that return multiple entities now support Pagination. This prevents the server from being overloaded and provides a better user experience for frontend applications.
+
+Base Endpoint: `GET /api/movies`
+
+Query Parameters:
+
+* page: The page index (starts from 0).
+
+* size: Number of records per page (default: 10).
+
+Example Request: GET `/api/movies?page=0&size=5`
+
+Page Object Structure:
+The API now returns a structured Page object instead of a simple array:
+
+* content: The list of movie/actor objects for the requested page.
+
+* totalElements: Total number of records in the database.
+
+* totalPages: Total number of pages available based on the size parameter.
+
+* last / first: Boolean flags to help with UI navigation (Previous/Next buttons).
+
+# 🔍 Advanced Search with Pagination
+The search functionality has been upgraded to support both keyword filtering and pagination simultaneously.
+
+Endpoint: GET `/api/movies/search`
+
+Example: `/api/movies/search?title=the&page=0&size=5`
+
+Behavior: Returns all movies containing the keyword "the" in their title, sliced into pages of 5 items.
+
+# 💡 Optimized JSON Response Ordering
+To improve data readability in API testing tools like Postman (especially in Table View), the JSON serialization order has been strictly defined using Jackson annotations.
+
+* Movie Table: title is now the primary column.
+
+* Actor Sub-table: name is displayed first.
 
 # 💡 Note on Database
 This project uses a local SQLite file. The data is saved automatically in the project folder, so your movies won't disappear after a restart!

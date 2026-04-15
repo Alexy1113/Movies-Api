@@ -3,6 +3,9 @@ package com.moviesapi.movies_api.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,7 +22,6 @@ import com.moviesapi.movies_api.service.MovieService;
 
 /**
  * REST Controller for managing Movie entities.
- * Handles primary operations including complex filtering by year, genre, actor, or title.
  */
 @RestController
 @RequestMapping("/api/movies")
@@ -29,55 +31,71 @@ public class MovieController {
     private MovieService movieService;
 
     /**
-     * Retrieves movies based on various optional filters.
-     * Priority is given to the first non-null parameter provided.
-     * * @param year  Filter movies by release year.
-     * @param genre Filter movies by genre ID.
-     * @param actor Filter movies by actor ID.
-     * @param title Search movies by a title keyword.
-     * @return A list of movies matching the criteria, or all movies if no filters are applied.
+     * Extra requirements: Paginated search by title.
+     * GET /api/movies/search?title=matrix&page=0&size=5
      */
-    @GetMapping
-    public List<Movie> getMovies(
-            @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) Long genre,
-            @RequestParam(required = false) Long actor,
-            @RequestParam(required = false) String title) {
-        
-        if (year != null) return movieService.getMoviesByYear(year);
-        if (genre != null) return movieService.getMoviesByGenre(genre);
-        if (actor != null) return movieService.getMoviesByActor(actor);
-        if (title != null) return movieService.searchByTitle(title);
-        
-        return movieService.getAllMovies();
+    @GetMapping("/search")
+    public ResponseEntity<Page<Movie>> searchMovies(
+            @RequestParam String title,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(movieService.searchByTitle(title, page, size));
     }
 
     /**
-     * Retrieves a single movie by its unique ID.
-     * @param id The ID of the movie.
-     * @return ResponseEntity containing the movie data.
+     * Extra requirements: Paginated list of all movies.
+     * GET /api/movies/paginated?page=0&size=10
      */
+    @GetMapping("/paginated")
+    public ResponseEntity<Page<Movie>> getMoviesPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(movieService.getAllMoviesPaginated(page, size));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Movie> getMovieById(@PathVariable Long id) {
         return ResponseEntity.ok(movieService.getMovieById(id));
     }
 
     /**
-     * Creates and saves a new movie entry.
-     * Associations with genres and actors should be provided as lists of IDs.
-     * * @param movie The movie object to be created.
-     * @return The saved movie entity with 201 Created status.
+     * Requirement: Get all actors in a specific movie.
+     * GET /api/movies/{movieId}/actors
      */
+   /**
+     * Retrieves movies with support for filtering AND pagination.
+     * Use case: GET /api/movies?page=0&size=10
+     */
+    @GetMapping
+    public ResponseEntity<Page<Movie>> getMovies(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Long genre,
+            @RequestParam(required = false) Long actor,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        Pageable pageable = PageRequest.of(page, size);
+        
+        // If no filters are specified, all movies are returned with pagination.
+        if (year == null && genre == null && actor == null) {
+            return ResponseEntity.ok(movieService.getAllMoviesPaginated(page, size));
+        }
+
+       // If there are filters, we return them (for simplicity, in this task, filters return a List)
+        //  But to preserve the Page structure, we can wrap them in PageImpl
+        List<Movie> results;
+        if (year != null) results = movieService.getMoviesByYear(year);
+        else if (genre != null) results = movieService.getMoviesByGenre(genre);
+        else results = movieService.getMoviesByActor(actor);
+
+        return ResponseEntity.ok(new org.springframework.data.domain.PageImpl<>(results, pageable, results.size()));
+    }
+
     @PostMapping
     public ResponseEntity<Movie> createMovie(@RequestBody Movie movie) {
         return new ResponseEntity<>(movieService.saveMovie(movie), HttpStatus.CREATED);
     }
 
-    /**
-     * Permanently deletes a movie from the database.
-     * @param id The ID of the movie to remove.
-     * @return 204 No Content on successful deletion.
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
         movieService.deleteMovie(id);

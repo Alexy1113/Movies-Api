@@ -2,6 +2,8 @@ package com.moviesapi.movies_api.model;
 
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -15,7 +17,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 /**
  * Represents a Movie entity in the database.
  * Each movie has a title, release year, duration, and associated genres and actors.
@@ -23,6 +24,8 @@ import lombok.Setter;
 @Entity
 @Table(name = "movies")
 @Getter @Setter @NoArgsConstructor
+// put movies titles first in the response
+@JsonPropertyOrder({ "title", "releaseYear", "duration", "genres", "id", "actors" })
 public class Movie {
 
     @Id

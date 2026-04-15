@@ -3,6 +3,9 @@ package com.moviesapi.movies_api.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable; 
 import org.springframework.stereotype.Service;
 
 import com.moviesapi.movies_api.model.Movie;
@@ -10,7 +13,7 @@ import com.moviesapi.movies_api.repository.MovieRepository;
 
 /**
  * Service class for managing Movie business logic.
- * Provides various filtering methods for movies based on release year, genres, actors, or titles.
+ * Handles CRUD operations, filtering, and paginated searching.
  */
 @Service
 public class MovieService {
@@ -19,15 +22,23 @@ public class MovieService {
     private MovieRepository movieRepository;
 
     /**
-     * Retrieves all movies from the database.
+     * Retrieves all movies without pagination.
      */
     public List<Movie> getAllMovies() {
         return movieRepository.findAll();
     }
 
     /**
+     * Retrieves a paginated list of all movies.
+     * Useful for large databases to limit response size.
+     */
+    public Page<Movie> getAllMoviesPaginated(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return movieRepository.findAll(pageable);
+    }
+
+    /**
      * Finds a single movie by its ID.
-     * @throws RuntimeException if no movie is found with the given ID.
      */
     public Movie getMovieById(Long id) {
         return movieRepository.findById(id)
@@ -43,7 +54,6 @@ public class MovieService {
 
     /**
      * Retrieves movies that belong to a specific genre.
-     * @param genreId ID of the genre to filter by.
      */
     public List<Movie> getMoviesByGenre(Long genreId) {
         return movieRepository.findByGenresId(genreId);
@@ -51,18 +61,20 @@ public class MovieService {
 
     /**
      * Retrieves movies featuring a specific actor.
-     * @param actorId ID of the actor to filter by.
      */
     public List<Movie> getMoviesByActor(Long actorId) {
         return movieRepository.findByActorsId(actorId);
     }
 
     /**
-     * Searches for movies with titles containing the search string (case-insensitive).
-     * @param title Keyword to search in titles.
+     * Performs a paginated search for movies by title (case-insensitive).
+     * @param title Keyword to search.
+     * @param page Current page index.
+     * @param size Number of records per page.
      */
-    public List<Movie> searchByTitle(String title) {
-        return movieRepository.findByTitleContainingIgnoreCase(title);
+    public Page<Movie> searchByTitle(String title, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return movieRepository.findByTitleContainingIgnoreCase(title, pageable);
     }
 
     /**
